@@ -3,8 +3,12 @@
 Default target module: problems
 Override with: SOLUTIONS_MODULE=reference_solutions
 """
-
 from __future__ import annotations
+
+from typing import Any
+
+
+
 
 import importlib
 import io
@@ -26,8 +30,8 @@ problems = importlib.import_module(MODULE_NAME)
 class Lecture03ProblemsTest(unittest.TestCase):
     def test_countdown(self) -> None:
         c = problems.Countdown(5)
-        self.assertEqual(list(c), [5, 4, 3, 2, 1, 0])
-        self.assertEqual(list(c), [5, 4, 3, 2, 1, 0])
+        self.assertEqual(list[Any](problems.Countdown(5)), [5, 4, 3, 2, 1, 0])
+        self.assertEqual(list(problems.Countdown(5)), [5, 4, 3, 2, 1, 0])
         self.assertEqual(list(problems.Countdown(-1)), [])
 
     def test_step_iterator(self) -> None:
