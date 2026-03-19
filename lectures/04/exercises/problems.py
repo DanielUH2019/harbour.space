@@ -19,7 +19,9 @@ Problems:
 
 from __future__ import annotations
 
+from ast import arg
 from collections.abc import Callable
+import time
 from typing import Any
 
 
@@ -42,7 +44,11 @@ def log_calls(func: Callable[..., Any]) -> Callable[..., Any]:
     add(2, 3) -> 5
     5
     """
-    raise NotImplementedError
+    def wraps( *args, **kwargs):
+        result = func(*args, **kwargs)
+        print(f"{func.__name__}{args} -> {result}")
+        return result
+    return wraps
 
 
 def measure_time(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -62,7 +68,13 @@ def measure_time(func: Callable[..., Any]) -> Callable[..., Any]:
     >>> work()
     done
     """
-    raise NotImplementedError
+    def wraps( *args, **kwargs):
+        start_time = time.perf_counter()
+        result = func(*args, **kwargs)
+        end_time = time.perf_counter()
+        print(f"Executed in {end_time - start_time * 1000} ms")
+        return result
+    return wraps
 
 
 def count_calls(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -80,7 +92,11 @@ def count_calls(func: Callable[..., Any]) -> Callable[..., Any]:
     >>> ping.calls
     2
     """
-    raise NotImplementedError
+    def wraps( *args, **kwargs):
+        wraps.calls += 1
+        return func(*args, **kwargs)
+    wraps.calls = 0
+    return wraps
 
 
 def ensure_non_negative(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -95,7 +111,12 @@ def ensure_non_negative(func: Callable[..., Any]) -> Callable[..., Any]:
     >>> diff(5, 2)
     3
     """
-    raise NotImplementedError
+    def wraps( *args, **kwargs):
+        result = func(*args, **kwargs)
+        if result < 0:
+            raise ValueError("Result is negative")
+        return result
+    return wraps
 
 
 class Retry:
@@ -115,10 +136,19 @@ class Retry:
     """
 
     def __init__(self, times: int) -> None:
-        raise NotImplementedError
+        if times < 0:
+            raise ValueError()
+        self.times = times
 
     def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
-        raise NotImplementedError
+        def wraps( *args, **kwargs):
+            for _ in range(self.times + 1):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    continue
+            raise ValueError("Function failed after all retries")
+        return wraps
 
 
 class Throttle:
@@ -156,7 +186,20 @@ class Throttle:
     - Implement this as a class decorator
     """
 
-    pass
+    def __init__(self, interval: float) -> None:
+        if interval < 0:
+            raise ValueError("Interval must be non-negative")
+        self.interval = interval
+        self.last_call = 0
+
+    def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
+        def wraps( *args, **kwargs):
+            t = time.perf_counter()
+            if t - self.last_call < self.interval:
+                raise RuntimeError("Too many calls")
+            self.last_call = t
+            return func(*args, **kwargs)
+        return wraps
 
 
 class CallLimit:
@@ -197,8 +240,19 @@ class CallLimit:
     - Implement this as a class decorator
     """
 
-    pass
+    def __init__(self, limit: int) -> None:
+        if limit < 0:
+            raise ValueError("Limit must be non-negative")
+        self.limit = limit
 
+    def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
+        def wraps( *args, **kwargs):
+            if wraps.calls >= self.limit:
+                raise RuntimeError("Call limit exceeded")
+            wraps.calls += 1
+            return func(*args, **kwargs)
+        wraps.calls = 0
+        return wraps
 
 class LruCache:
     """Problem 8 (optional). `LruCache(maxsize)` class decorator.
@@ -219,7 +273,29 @@ class LruCache:
     """
 
     def __init__(self, maxsize: int) -> None:
-        raise NotImplementedError
+        if maxsize < 0:
+            raise ValueError("Maxsize must be non-negative")
+        self.maxsize = maxsize
+        self.cache = {} if maxsize > 0 else None
+        self.last_used_arg = None
 
     def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
-        raise NotImplementedError
+        def wraps( *args, **kwargs):
+            if self.cache is None:
+                return func(*args, **kwargs)
+            result = None
+            if args in self.cache:
+                result = self.cache[args]
+
+            if len(self.cache) >= self.maxsize and len(self.cache) > 0:
+                if self.last_used_arg:
+                    del self.cache[self.last_used_arg]
+                else:
+                    self.cache.popitem()
+            
+            if not result:
+                result = func(*args, **kwargs)
+                self.cache[args] = result
+            self.last_used_arg = args
+            return result
+        return wraps
