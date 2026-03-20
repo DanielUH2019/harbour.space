@@ -19,11 +19,17 @@ app = FastAPI()
 
 class MessageIn(BaseModel):
     # TODO: add fields
-    pass
+    body: str 
+    
 
+@app.get("/")
+def hello() -> dict[str, str]:
+    return {"status": "Its Working"}
 
 @app.post("/messages")
 def receive_message(payload: MessageIn) -> dict[str, str]:
     # TODO: print message details to console
+    print("message: ", payload)
     # TODO: return status response
-    raise NotImplementedError
+    return {"status": "received"}
+    

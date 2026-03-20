@@ -14,13 +14,19 @@ Partner setup:
 
 import requests
 
-TARGET_BASE_URL = "https://replace-with-partner-ngrok-url"
-SENDER_NAME = "replace-with-your-name"
+TARGET_BASE_URL = "https://bb9e-91-126-71-186.ngrok-free.app"
+SENDER_NAME = "daniel"
 
 
 def main() -> None:
     # TODO: implement input loop and POST sending
-    pass
+    while True:
+        text = input()
+        message = {'sender': SENDER_NAME, 'text': text}
+        response = requests.post(f"{TARGET_BASE_URL}/messages", json=message)
+        print('status ', response.status_code)
+        print(response.json())
+
 
 
 if __name__ == "__main__":
