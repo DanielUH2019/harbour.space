@@ -27,7 +27,10 @@ class Student(Base):
 
     # TODO: add relationship to Assignment
     # assignments: Mapped[list["Assignment"]] = relationship(back_populates="student")
+    assignments: Mapped[list["Assignment"]] = relationship(back_populates="student")
 
+    def __repr__(self) -> str:
+        return f"Student(id={self.id}, name={self.name}, age={self.age}, email={self.email}, track={self.track})"
 
 class Assignment(Base):
     __tablename__ = "assignments"
@@ -39,3 +42,7 @@ class Assignment(Base):
 
     # TODO: add relationship back to Student
     # student: Mapped[Student] = relationship(back_populates="assignments")
+    student: Mapped[Student] = relationship(back_populates="assignments")
+
+    def __repr__(self) -> str:
+        return f"Assignment(id={self.id}, title={self.title}, score={self.score}, student_id={self.student_id})"
