@@ -6,6 +6,9 @@ from sqlalchemy.orm import Session
 from db_models import Student
 import sqlite3
 
+
+# Note: deployed on https://harbour-space.onrender.com using the dockerfile
+
 DB_URL = "sqlite:///school.db"
 
 app = FastAPI()
