@@ -26,7 +26,6 @@ class StudentModel(BaseModel):
     email: str
     track: str
 
-STUDENT_COUNTER = 0
 
 
 def main():
@@ -71,14 +70,15 @@ def get_by_id(id: int) -> StudentModel:
 @app.post("/")
 def create_student(data: StudentCreateModel) -> StudentModel:
     global STUDENT_COUNTER
-    STUDENT_COUNTER += 1
     engine = create_engine(DB_URL, echo=False)
+    new_id = None
     with Session(engine) as session:
-        student = Student(id=STUDENT_COUNTER, **data.model_dump())
+        student = Student(**data.model_dump())
         session.add(student)
         session.commit()
+        new_id = student.id
     
-    return StudentModel(id=STUDENT_COUNTER, **data.model_dump())
+    return StudentModel(id=new_id, **data.model_dump())
 
 
 if __name__ == "__main__":
